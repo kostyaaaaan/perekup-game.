@@ -9,20 +9,22 @@
 </head>
 <body>
     <div id="app">
-        <!-- Главный экран -->
         <div id="main-screen">
+            <!-- Шапка -->
             <div class="header">
                 <div class="game-title">🔑 ПЕРЕКУПЫ</div>
-                <div class="balance-block">
-                    💰 <span id="balance">0</span> монет
-                </div>
+                <div class="league-badge" id="league-badge">🔰 Новичок</div>
+                <div class="balance-block">💰 <span id="balance">0</span> монет</div>
             </div>
 
+            <!-- Главное меню -->
             <div class="menu-buttons">
                 <button onclick="showGarage()">🚗 Мой Гараж</button>
                 <button onclick="showMarket()">📈 Авторынок</button>
                 <button onclick="showFarm()">⚡ Фарм</button>
                 <button onclick="showInvite()">👥 Пригласить</button>
+                <button onclick="showFriends()">👫 Друзья</button>
+                <button onclick="showRating()">🏆 Рейтинг</button>
             </div>
 
             <!-- Мой гараж -->
@@ -32,9 +34,10 @@
                 <button onclick="hideGarage()">◀️ Назад</button>
             </div>
 
-            <!-- Авторынок (список игроков) -->
+            <!-- Авторынок (игроки той же лиги) -->
             <div id="market-screen" class="screen hidden">
                 <h3>📈 Авторынок</h3>
+                <p style="color:#aaa;font-size:13px;text-align:center;">Игроки твоей лиги</p>
                 <div id="market-list"></div>
                 <button onclick="hideMarket()">◀️ Назад</button>
             </div>
@@ -51,8 +54,22 @@
                 <h3>👥 Пригласи барыгу</h3>
                 <p>Твоя реферальная ссылка:</p>
                 <code id="ref-link"></code>
-                <p>Приглашено игроков: <span id="ref-count">0</span></p>
+                <p>Друзей приглашено: <span id="ref-count">0</span></p>
                 <button onclick="hideInvite()">◀️ Назад</button>
+            </div>
+
+            <!-- Друзья -->
+            <div id="friends-screen" class="screen hidden">
+                <h3>👫 Твои друзья</h3>
+                <div id="friends-list"></div>
+                <button onclick="hideFriends()">◀️ Назад</button>
+            </div>
+
+            <!-- Рейтинг -->
+            <div id="rating-screen" class="screen hidden">
+                <h3>🏆 Рейтинг перекупов</h3>
+                <div id="rating-list"></div>
+                <button onclick="hideRating()">◀️ Назад</button>
             </div>
 
             <!-- Фарм -->

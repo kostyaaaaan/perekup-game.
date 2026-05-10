@@ -3,73 +3,644 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Перекупы</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <title>Башня Защиты</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #1a1a2e;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #game-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            max-height: 750px;
+            background: linear-gradient(180deg, #0f3460 0%, #16213e 50%, #1a1a2e 100%);
+            position: relative;
+            border-left: 2px solid #e94560;
+            border-right: 2px solid #e94560;
+            overflow: hidden;
+        }
+        /* Верхняя панель */
+        #top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 10px 15px;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            border-bottom: 1px solid rgba(233,69,96,0.3);
+        }
+        #gold-display {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        #gold-display span {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%,100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        #wave-display {
+            font-size: 14px;
+            color: #aaa;
+        }
+        #hp-bar-bg {
+            position: absolute;
+            top: 55px;
+            left: 10px;
+            width: 120px;
+            height: 14px;
+            background: #333;
+            border-radius: 7px;
+            z-index: 10;
+            border: 1px solid #555;
+        }
+        #hp-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            border-radius: 7px;
+            transition: width 0.3s;
+            width: 100%;
+        }
+        #hp-text {
+            position: absolute;
+            top: 52px;
+            left: 140px;
+            font-size: 12px;
+            color: #fff;
+            z-index: 10;
+        }
+        /* Холст для рисования */
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        /* Нижняя панель улучшений */
+        #upgrade-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 10px;
+            background: rgba(0,0,0,0.8);
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            z-index: 10;
+            border-top: 1px solid rgba(233,69,96,0.3);
+        }
+        .upgrade-btn {
+            padding: 10px 6px;
+            background: linear-gradient(145deg, #1e1e3a, #161630);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .upgrade-btn:active {
+            transform: scale(0.93);
+            background: #e94560;
+            border-color: #e94560;
+        }
+        .upgrade-btn.locked {
+            opacity: 0.4;
+        }
+        /* Кнопка следующей волны */
+        #next-wave-btn {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 14px 30px;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            border: none;
+            border-radius: 25px;
+            color: #000;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 4px 20px rgba(255,215,0,0.4);
+            display: none;
+        }
+        #next-wave-btn:active {
+            transform: translateX(-50%) scale(0.93);
+        }
+        /* Сообщения */
+        #message {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffd700;
+            text-align: center;
+            z-index: 20;
+            text-shadow: 0 0 20px rgba(255,215,0,0.8);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #message.show {
+            opacity: 1;
+        }
+    </style>
 </head>
 <body>
-    <div id="app">
-        <div class="header">
-            <div class="game-title">🔑 ПЕРЕКУПЫ</div>
-            <div class="league-badge" id="league-badge">🔰 Новичок</div>
-            <div class="balance-block">💰 <span id="balance">500</span> монет</div>
+    <div id="game-container">
+        <!-- Верхняя панель -->
+        <div id="top-bar">
+            <div id="gold-display">💰 <span id="gold">100</span></div>
+            <div id="wave-display">🌊 Волна: <span id="wave">1</span></div>
         </div>
+        <div id="hp-bar-bg"><div id="hp-bar-fill"></div></div>
+        <div id="hp-text">❤️ <span id="hp">100</span>/<span id="max-hp">100</span></div>
 
-        <div class="menu-buttons">
-            <button onclick="showGarage()">🚗 Мой Гараж</button>
-            <button onclick="showMarket()">📈 Авторынок</button>
-            <button onclick="showFarm()">⚡ Фарм</button>
-            <button onclick="showInvite()">👥 Пригласить</button>
-            <button onclick="showFriends()">👫 Друзья</button>
-            <button onclick="showRating()">🏆 Рейтинг</button>
-        </div>
+        <!-- Холст -->
+        <canvas id="canvas"></canvas>
 
-        <div id="garage-screen" class="screen hidden">
-            <h3>🚗 Мой Гараж</h3>
-            <div id="garage-cars"></div>
-            <button onclick="hideGarage()">◀️ Назад</button>
-        </div>
+        <!-- Кнопка следующей волны -->
+        <button id="next-wave-btn" onclick="startNextWave()">⚔️ Следующая волна</button>
 
-        <div id="market-screen" class="screen hidden">
-            <h3>📈 Авторынок</h3>
-            <p style="color:#aaa;font-size:13px;text-align:center;">Игроки твоей лиги</p>
-            <div id="market-list"></div>
-            <button onclick="hideMarket()">◀️ Назад</button>
-        </div>
+        <!-- Сообщение -->
+        <div id="message"></div>
 
-        <div id="player-garage-screen" class="screen hidden">
-            <h3 id="player-garage-title">Гараж игрока</h3>
-            <div id="player-garage-cars"></div>
-            <button onclick="hidePlayerGarage()">◀️ Назад</button>
-        </div>
-
-        <div id="invite-screen" class="screen hidden">
-            <h3>👥 Пригласи барыгу</h3>
-            <p>Твоя реферальная ссылка:</p>
-            <code id="ref-link"></code>
-            <p>Друзей приглашено: <span id="ref-count">0</span></p>
-            <button onclick="hideInvite()">◀️ Назад</button>
-        </div>
-
-        <div id="friends-screen" class="screen hidden">
-            <h3>👫 Твои друзья</h3>
-            <div id="friends-list"></div>
-            <button onclick="hideFriends()">◀️ Назад</button>
-        </div>
-
-        <div id="rating-screen" class="screen hidden">
-            <h3>🏆 Рейтинг перекупов</h3>
-            <div id="rating-list"></div>
-            <button onclick="hideRating()">◀️ Назад</button>
-        </div>
-
-        <div id="farm-screen" class="screen hidden">
-            <h3>⚡ Крути движки!</h3>
-            <div id="farm-result"></div>
-            <button id="farm-button" onclick="doFarm()">⚡ Газануть!</button>
-            <button onclick="hideFarm()">◀️ Назад</button>
+        <!-- Панель улучшений -->
+        <div id="upgrade-panel">
+            <button class="upgrade-btn" id="btn-hp" onclick="upgradeHP()">❤️ Стены<br><small id="cost-hp">50 💰</small></button>
+            <button class="upgrade-btn" id="btn-dmg" onclick="upgradeDamage()">⚔️ Урон<br><small id="cost-dmg">75 💰</small></button>
+            <button class="upgrade-btn" id="btn-spd" onclick="upgradeSpeed()">⏱️ Скорость<br><small id="cost-spd">60 💰</small></button>
         </div>
     </div>
-    <script src="app.js"></script>
+
+    <script>
+        // ============ ПЕРЕМЕННЫЕ ============
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+
+        // Размеры
+        var W, H;
+
+        // Башня
+        var tower = {
+            x: 0,
+            y: 0,
+            w: 60,
+            h: 100,
+            hp: 100,
+            maxHp: 100,
+            damage: 10,
+            attackSpeed: 1,     // выстрелов в секунду
+            lastShot: 0,
+            level: 1
+        };
+
+        // Монстры
+        var monsters = [];
+        var bullets = [];
+
+        // Игровые данные
+        var gold = 100;
+        var wave = 1;
+        var monstersPerWave = 3;
+        var monsterBaseHp = 30;
+        var monsterBaseDamage = 5;
+        var monsterBaseSpeed = 40; // пикселей в секунду
+        var waveActive = false;
+        var monstersSpawned = 0;
+        var monstersToSpawn = 0;
+        var spawnTimer = 0;
+        var gameOver = false;
+
+        // Цены улучшений
+        var costs = {
+            hp: 50,
+            damage: 75,
+            speed: 60
+        };
+
+        // ============ ИНИЦИАЛИЗАЦИЯ ============
+        function resize() {
+            var container = document.getElementById('game-container');
+            W = container.clientWidth;
+            H = container.clientHeight;
+            canvas.width = W;
+            canvas.height = H;
+            tower.x = 10;
+            tower.y = H / 2 - tower.h / 2;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Загружаем прогресс
+        function loadGame() {
+            var saved = localStorage.getItem('tower_defense_save');
+            if (saved) {
+                try {
+                    var data = JSON.parse(saved);
+                    gold = data.gold || 100;
+                    wave = data.wave || 1;
+                    tower.hp = data.towerHp || 100;
+                    tower.maxHp = data.towerMaxHp || 100;
+                    tower.damage = data.towerDamage || 10;
+                    tower.attackSpeed = data.towerAttackSpeed || 1;
+                    costs = data.costs || { hp: 50, damage: 75, speed: 60 };
+                } catch(e) {}
+            }
+            updateUI();
+        }
+
+        function saveGame() {
+            var data = {
+                gold: gold,
+                wave: wave,
+                towerHp: tower.hp,
+                towerMaxHp: tower.maxHp,
+                towerDamage: tower.damage,
+                towerAttackSpeed: tower.attackSpeed,
+                costs: costs
+            };
+            localStorage.setItem('tower_defense_save', JSON.stringify(data));
+        }
+
+        // ============ UI ============
+        function updateUI() {
+            document.getElementById('gold').textContent = gold;
+            document.getElementById('wave').textContent = wave;
+            document.getElementById('hp').textContent = Math.max(0, tower.hp);
+            document.getElementById('max-hp').textContent = tower.maxHp;
+            document.getElementById('hp-bar-fill').style.width = (tower.hp / tower.maxHp * 100) + '%';
+
+            document.getElementById('cost-hp').textContent = costs.hp + ' 💰';
+            document.getElementById('cost-dmg').textContent = costs.damage + ' 💰';
+            document.getElementById('cost-spd').textContent = costs.speed + ' 💰';
+
+            // Подсветка доступных кнопок
+            var btnHp = document.getElementById('btn-hp');
+            var btnDmg = document.getElementById('btn-dmg');
+            var btnSpd = document.getElementById('btn-spd');
+            
+            btnHp.classList.toggle('locked', gold < costs.hp);
+            btnDmg.classList.toggle('locked', gold < costs.damage);
+            btnSpd.classList.toggle('locked', gold < costs.speed);
+
+            // Кнопка следующей волны
+            var btnWave = document.getElementById('next-wave-btn');
+            if (!waveActive && !gameOver) {
+                btnWave.style.display = 'block';
+            } else {
+                btnWave.style.display = 'none';
+            }
+        }
+
+        function showMessage(text) {
+            var msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.classList.add('show');
+            setTimeout(function() {
+                msg.classList.remove('show');
+            }, 1500);
+        }
+
+        // ============ УЛУЧШЕНИЯ ============
+        function upgradeHP() {
+            if (gold < costs.hp) return;
+            gold -= costs.hp;
+            tower.maxHp += 50;
+            tower.hp = Math.min(tower.hp + 50, tower.maxHp);
+            costs.hp = Math.floor(costs.hp * 1.5);
+            saveGame();
+            updateUI();
+            showMessage('+50 ❤️');
+        }
+
+        function upgradeDamage() {
+            if (gold < costs.damage) return;
+            gold -= costs.damage;
+            tower.damage += 5;
+            costs.damage = Math.floor(costs.damage * 1.5);
+            saveGame();
+            updateUI();
+            showMessage('+5 ⚔️');
+        }
+
+        function upgradeSpeed() {
+            if (gold < costs.speed) return;
+            gold -= costs.speed;
+            tower.attackSpeed += 0.3;
+            costs.speed = Math.floor(costs.speed * 1.5);
+            saveGame();
+            updateUI();
+            showMessage('+⏱️');
+        }
+
+        // ============ ВОЛНЫ ============
+        function startNextWave() {
+            if (gameOver) return;
+            waveActive = true;
+            monstersToSpawn = monstersPerWave + wave;
+            monstersSpawned = 0;
+            spawnTimer = 0;
+            updateUI();
+            showMessage('🌊 Волна ' + wave + '!');
+        }
+
+        function spawnMonster() {
+            var hp = monsterBaseHp + wave * 15;
+            var damage = monsterBaseDamage + wave * 2;
+            var speed = monsterBaseSpeed + wave * 5;
+            
+            var monster = {
+                x: W - 40,
+                y: Math.random() * (H - 60) + 20,
+                w: 30,
+                h: 40,
+                hp: hp,
+                maxHp: hp,
+                damage: damage,
+                speed: speed,
+                attackCooldown: 0
+            };
+            monsters.push(monster);
+            monstersSpawned++;
+        }
+
+        // ============ ВЫСТРЕЛЫ ============
+        function shoot() {
+            if (monsters.length === 0) return;
+            
+            // Находим ближайшего монстра
+            var target = null;
+            var minDist = Infinity;
+            for (var i = 0; i < monsters.length; i++) {
+                var m = monsters[i];
+                var dist = m.x - tower.x;
+                if (dist < minDist && dist > 0) {
+                    minDist = dist;
+                    target = m;
+                }
+            }
+            
+            if (!target) return;
+            
+            bullets.push({
+                x: tower.x + tower.w,
+                y: tower.y + tower.h / 2,
+                target: target,
+                speed: 300,
+                damage: tower.damage
+            });
+        }
+
+        // ============ ОБНОВЛЕНИЕ ИГРЫ ============
+        function update(dt) {
+            if (gameOver) return;
+            if (!waveActive) return;
+
+            // Спавн монстров
+            if (monstersSpawned < monstersToSpawn) {
+                spawnTimer += dt;
+                if (spawnTimer > 1.5) {
+                    spawnTimer = 0;
+                    spawnMonster();
+                }
+            }
+
+            // Стрельба
+            if (Date.now() / 1000 - tower.lastShot > 1 / tower.attackSpeed) {
+                shoot();
+                tower.lastShot = Date.now() / 1000;
+            }
+
+            // Движение пуль
+            for (var i = bullets.length - 1; i >= 0; i--) {
+                var b = bullets[i];
+                if (!b.target || b.target.hp <= 0) {
+                    bullets.splice(i, 1);
+                    continue;
+                }
+                var dx = b.target.x - b.x;
+                var dy = (b.target.y + b.target.h/2) - b.y;
+                var dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < 5) {
+                    // Попадание
+                    b.target.hp -= b.damage;
+                    if (b.target.hp <= 0) {
+                        gold += 15 + wave * 5;
+                        monsters.splice(monsters.indexOf(b.target), 1);
+                        updateUI();
+                    }
+                    bullets.splice(i, 1);
+                } else {
+                    b.x += (dx / dist) * b.speed * dt;
+                    b.y += (dy / dist) * b.speed * dt;
+                }
+            }
+
+            // Движение монстров
+            for (var i = monsters.length - 1; i >= 0; i--) {
+                var m = monsters[i];
+                
+                if (m.x > tower.x + tower.w) {
+                    // Идём к башне
+                    m.x -= m.speed * dt;
+                } else {
+                    // Атакуем башню
+                    m.attackCooldown -= dt;
+                    if (m.attackCooldown <= 0) {
+                        tower.hp -= m.damage;
+                        m.attackCooldown = 1;
+                        if (tower.hp <= 0) {
+                            tower.hp = 0;
+                            gameOver = true;
+                            showMessage('💀 ПОРАЖЕНИЕ!');
+                            saveGame();
+                        }
+                        updateUI();
+                    }
+                }
+            }
+
+            // Проверка конца волны
+            if (monstersSpawned >= monstersToSpawn && monsters.length === 0) {
+                waveActive = false;
+                wave++;
+                gold += wave * 25;
+                saveGame();
+                updateUI();
+                showMessage('✅ Волна ' + (wave-1) + ' пройдена! +' + (wave*25) + ' 💰');
+            }
+        }
+
+        // ============ ОТРИСОВКА ============
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+
+            // Фон
+            ctx.fillStyle = '#16213e';
+            ctx.fillRect(0, 0, W, H);
+
+            // Линия земли
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            for (var i = 0; i < W; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(i, H - 80);
+                ctx.lineTo(i + 20, H - 80);
+                ctx.stroke();
+            }
+
+            // Башня
+            drawTower();
+
+            // Монстры
+            for (var i = 0; i < monsters.length; i++) {
+                drawMonster(monsters[i]);
+            }
+
+            // Пули
+            ctx.fillStyle = '#ffd700';
+            for (var i = 0; i < bullets.length; i++) {
+                var b = bullets[i];
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawTower() {
+            var tx = tower.x;
+            var ty = tower.y;
+            var tw = tower.w;
+            var th = tower.h;
+
+            // Тело башни
+            var gradient = ctx.createLinearGradient(tx, ty, tx + tw, ty);
+            gradient.addColorStop(0, '#8B7355');
+            gradient.addColorStop(0.5, '#A0896C');
+            gradient.addColorStop(1, '#6B5640');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(tx, ty, tw, th);
+
+            // Зубцы
+            ctx.fillStyle = '#5C4033';
+            var bW = tw / 4;
+            for (var i = 0; i < 4; i++) {
+                ctx.fillRect(tx + i * bW, ty - 15, bW - 2, 20);
+            }
+
+            // Окна
+            ctx.fillStyle = '#ffd700';
+            for (var i = 0; i < 3; i++) {
+                ctx.fillRect(tx + tw - 15, ty + 10 + i * 30, 10, 10);
+            }
+
+            // Флаг
+            ctx.fillStyle = '#e94560';
+            ctx.beginPath();
+            ctx.moveTo(tx + tw/2, ty - 15);
+            ctx.lineTo(tx + tw/2 + 25, ty - 25);
+            ctx.lineTo(tx + tw/2, ty - 35);
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(tx + tw/2, ty - 15);
+            ctx.lineTo(tx + tw/2, ty - 45);
+            ctx.stroke();
+        }
+
+        function drawMonster(m) {
+            // Тело
+            var gradient = ctx.createRadialGradient(m.x, m.y, 2, m.x, m.y, m.w/2);
+            gradient.addColorStop(0, '#c23152');
+            gradient.addColorStop(1, '#4a0e1e');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(m.x, m.y, m.w/2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Глаза
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(m.x - 5, m.y - 5, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(m.x + 5, m.y - 5, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(m.x - 5, m.y - 5, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(m.x + 5, m.y - 5, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Рога
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(m.x - 8, m.y - m.h/2);
+            ctx.lineTo(m.x - 14, m.y - m.h/2 - 10);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(m.x + 8, m.y - m.h/2);
+            ctx.lineTo(m.x + 14, m.y - m.h/2 - 10);
+            ctx.stroke();
+
+            // HP-бар
+            if (m.hp < m.maxHp) {
+                var barW = 30;
+                var barH = 4;
+                var barX = m.x - barW/2;
+                var barY = m.y - m.h/2 - 15;
+                ctx.fillStyle = '#333';
+                ctx.fillRect(barX, barY, barW, barH);
+                ctx.fillStyle = '#e94560';
+                ctx.fillRect(barX, barY, barW * (m.hp / m.maxHp), barH);
+            }
+        }
+
+        // ============ ИГРОВОЙ ЦИКЛ ============
+        var lastTime = Date.now();
+
+        function gameLoop() {
+            var now = Date.now();
+            var dt = (now - lastTime) / 1000;
+            lastTime = now;
+
+            update(dt);
+            draw();
+            updateUI();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ============ ЗАПУСК ============
+        loadGame();
+        gameLoop();
+    </script>
 </body>
 </html>

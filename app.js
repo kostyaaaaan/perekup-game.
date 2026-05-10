@@ -1,4 +1,4 @@
-// ============ ВСТАВЬ СВОЮ ССЫЛКУ ↓ ============
+// ============ ВСТАВЬ СВОЮ ССЫЛКУ FIREBASE ↓ ============
 var FIREBASE_URL = 'https://perekup-game-default-rtdb.firebaseio.com/';
 
 // ============ TELEGRAM ============
@@ -59,7 +59,7 @@ var allPlayers = {};
 
 // ============ FIREBASE ============
 function loadAllData(callback) {
-    // Загружаем локально
+    // Шаг 1: Загружаем локально (быстро, всегда работает)
     var saved = localStorage.getItem('player_' + userId);
     if (saved) {
         try {
@@ -67,23 +67,26 @@ function loadAllData(callback) {
             player.balance = parsed.balance || 500;
             player.garage = parsed.garage || [];
             player.friends = parsed.friends || [];
+            player.ref_count = parsed.ref_count || 0;
             player.last_farm = parsed.last_farm || 0;
         } catch(e) {}
     }
 
-    // Загружаем из Firebase
-    fetch(FIREBASE_URL + 'players.json')
+    // Шаг 2: Загружаем всех игроков из Firebase
+    fetch(FIREBASE_URL + '.json')
     .then(function(res) { return res.json(); })
     .then(function(data) {
-        if (data) {
-            allPlayers = data;
+        if (data && data.players) {
+            allPlayers = data.players;
+            // Обновляем данные текущего игрока из облака
             if (allPlayers[userId]) {
-                player = allPlayers[userId];
-                player.id = userId;
-                player.name = player.name || userName;
-                player.friends = player.friends || [];
-                player.garage = player.garage || [];
-                localStorage.setItem('player_' + userId, JSON.stringify(player));
+                var cloudPlayer = allPlayers[userId];
+                player.balance = cloudPlayer.balance || player.balance;
+                player.garage = cloudPlayer.garage || player.garage;
+                player.friends = cloudPlayer.friends || player.friends;
+                player.ref_count = cloudPlayer.ref_count || player.ref_count;
+                player.last_farm = cloudPlayer.last_farm || player.last_farm;
+                player.name = cloudPlayer.name || player.name;
             }
         }
         finishInit(callback);
@@ -116,11 +119,13 @@ function saveLocal() {
 }
 
 function saveCloud() {
+    // Сохраняем ТОЛЬКО текущего игрока в Firebase (не перезаписываем всех)
     fetch(FIREBASE_URL + 'players/' + userId + '.json', {
         method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(player)
-    }).catch(function() {
-        // Ничего, локально сохранено
+    }).catch(function(e) {
+        console.log('Ошибка сохранения в облако:', e);
     });
 }
 
@@ -157,7 +162,7 @@ function showFarm() { hideAll(); $('farm-screen').classList.remove('hidden'); up
 function hideFarm() { $('farm-screen').classList.add('hidden'); }
 
 function inviteToChat() {
-    tg.openTelegramLink('https://t.me/+ТВОЯ_ССЫЛКА');
+    tg.openTelegramLink('https://t.me/+ТВОЯ_ССЫЛКА_НА_ЧАТ');
 }
 
 // ============ ОТРИСОВКА ============
@@ -205,7 +210,7 @@ function renderMarket() {
         if (getLeague(p.balance).name === myLeague.name) sameLeague.push(p);
     }
     if (!sameLeague.length) {
-        c.innerHTML = '<p style="text-align:center;color:#aaa;">В твоей лиге никого нет.</p>';
+        c.innerHTML = '<p style="text-align:center;color:#aaa;">В твоей лиге никого нет. Пригласи друзей!</p>';
         return;
     }
     var html = '';
@@ -248,7 +253,7 @@ function renderFriends() {
     for (var i = 0; i < player.friends.length; i++) {
         var f = allPlayers[player.friends[i]];
         if (!f) continue;
-        html += '<div class="friend-card"><h4>👤 ' + (f.name || 'Игрок') + '</h4><p>' + f.balance + ' 💰</p></div>';
+        html += '<div class="friend-card" onclick="showPlayerGarage(\'' + f.id + '\')"><div class="friend-card-info"><h4>👤 ' + (f.name || 'Игрок') + '</h4><p>' + f.balance + ' 💰</p></div></div>';
     }
     c.innerHTML = html;
 }
@@ -261,7 +266,11 @@ function renderRating() {
     var html = '';
     for (var i = 0; i < all.length; i++) {
         var p = all[i];
-        html += '<div class="rating-card"><div class="rating-pos">' + (i + 1) + '</div><div class="rating-card-info"><h4>' + (p.name || 'Игрок') + '</h4><p>' + p.balance + ' 💰</p></div></div>';
+        var medal = '';
+        if (i === 0) medal = '🥇';
+        else if (i === 1) medal = '🥈';
+        else if (i === 2) medal = '🥉';
+        html += '<div class="rating-card"><div class="rating-pos">' + (medal || (i + 1)) + '</div><div class="rating-card-info"><h4>' + (p.name || 'Игрок') + '</h4><p>' + p.balance + ' 💰 | Машин: ' + (p.garage ? p.garage.length : 0) + '</p></div></div>';
     }
     c.innerHTML = html || '<p style="text-align:center;color:#aaa;">Пусто.</p>';
 }
@@ -282,23 +291,37 @@ function updateFarmButton() {
     }
 }
 
-// ============ ДЕЙСТВИЯ ============
+// ============ ИГРОВЫЕ ДЕЙСТВИЯ ============
 function buyCar(sellerId, carIndex, price) {
     if (player.balance < price) return tg.showAlert('Мало монет!');
     var seller = allPlayers[sellerId];
     if (!seller || !seller.garage || !seller.garage[carIndex]) return tg.showAlert('Продано!');
+    
     var car = seller.garage.splice(carIndex, 1)[0];
+    var commission = Math.floor(price * 0.1);
     player.balance -= price;
-    seller.balance += Math.floor(price * 0.9);
+    seller.balance += price - commission;
+    car.ownerHistory.push(sellerId);
     car.timesResold++;
     car.buyPrice = price;
     car.level++;
     player.garage.push(car);
+    
+    // Сохраняем ОБОИХ игроков
     saveLocal();
     saveCloud();
+    // Сохраняем продавца
+    fetch(FIREBASE_URL + 'players/' + sellerId + '.json', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(seller)
+    });
+    localStorage.setItem('player_' + sellerId, JSON.stringify(seller));
+    allPlayers[sellerId] = seller;
+    
     updateUI();
     renderPlayerGarage(sellerId);
-    tg.showAlert('Куплено!');
+    tg.showAlert('Куплено! Комиссия: ' + commission + ' 💰');
 }
 
 function upgradeCar(index) {

@@ -1,7 +1,7 @@
 // ВСТАВЬ СВОИ ДАННЫЕ ↓
 const BIN_ID = '6a005098adc21f119a7be48c';
 const MASTER_KEY = '$2a$10$dtNfbApmiayE.YLsXsVpG.gAaPUEWPJu1ZhGPVizLklxuYC9BccdG';
-const BIN_URL = `https://api.jsonbin.io/v3/b/${6a005098adc21f119a7be48c}`;
+const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
 const tg = window.Telegram.WebApp;
 tg.expand();

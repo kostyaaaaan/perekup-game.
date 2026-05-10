@@ -1,0 +1,59 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Перекупы</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Главный экран -->
+        <div id="main-screen">
+            <div class="header">
+                <div class="balance-block">
+                    💰 Баланс: <span id="balance">0</span> монет
+                </div>
+            </div>
+
+            <div class="menu-buttons">
+                <button onclick="showGarage()">🚗 Мой Гараж</button>
+                <button onclick="showMarket()">📈 Авторынок</button>
+                <button onclick="showInvite()">👥 Пригласить барыгу</button>
+                <button onclick="showFarm()">🔧 Фарм (Крутить движки)</button>
+            </div>
+
+            <div id="garage-screen" class="screen hidden">
+                <h3>Твой гараж</h3>
+                <div id="garage-cars"></div>
+                <button onclick="hideGarage()">Назад</button>
+            </div>
+
+            <div id="market-screen" class="screen hidden">
+                <h3>Авторынок</h3>
+                <div id="market-list"></div>
+                <button onclick="hideMarket()">Назад</button>
+            </div>
+
+            <div id="invite-screen" class="screen hidden">
+                <h3>Приглашение</h3>
+                <p>Твоя ссылка:</p>
+                <code id="ref-link"></code>
+                <p>Приглашено: <span id="ref-count">0</span></p>
+                <button onclick="hideInvite()">Назад</button>
+            </div>
+
+            <div id="farm-screen" class="screen hidden">
+                <h3>Крути движки!</h3>
+                <div id="farm-result"></div>
+                <button id="farm-button" onclick="doFarm()">⚡ Газануть!</button>
+                <button onclick="hideFarm()">Назад</button>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
+```

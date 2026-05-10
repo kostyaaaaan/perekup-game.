@@ -23,14 +23,14 @@ const CAR_TEMPLATES = [
     { id: 10, name: 'Золотая Tesla',     basePrice: 25000, income: 500, emoji: '⚡' }
 ];
 
-// ============ ЛИГИ ============
+// ============ ЛИГИ (ИСПРАВЛЕНО) ============
 const LEAGUES = [
-    { name: '🔰 Новичок',    minBalance: 100,      maxBalance: 999,    cssClass: 'league-novice' },
+    { name: '🔰 Новичок',    minBalance: 0,      maxBalance: 999,    cssClass: 'league-novice' },
     { name: '🥉 Бронза',     minBalance: 1000,   maxBalance: 4999,   cssClass: 'league-bronze' },
-    { name: '🥈 Серебро',    minBalance: 50000,   maxBalance: 19999,  cssClass: 'league-silver' },
-    { name: '🥇 Золото',     minBalance: 200000,  maxBalance: 99999,  cssClass: 'league-gold' },
-    { name: '💎 Платина',    minBalance: 1000000, maxBalance: 499999, cssClass: 'league-platinum' },
-    { name: '👑 Алмаз',      minBalance: 5000000, maxBalance: Infinity,cssClass: 'league-diamond' }
+    { name: '🥈 Серебро',    minBalance: 5000,   maxBalance: 19999,  cssClass: 'league-silver' },
+    { name: '🥇 Золото',     minBalance: 20000,  maxBalance: 99999,  cssClass: 'league-gold' },
+    { name: '💎 Платина',    minBalance: 100000, maxBalance: 499999, cssClass: 'league-platinum' },
+    { name: '👑 Алмаз',      minBalance: 500000, maxBalance: Infinity,cssClass: 'league-diamond' }
 ];
 
 function getPlayerLeague(balance) {
@@ -187,7 +187,6 @@ function renderMarket() {
     const c = $('#market-list');
     const myLeague = getPlayerLeague(player.balance);
     
-    // Игроки той же лиги
     const sameLeague = Object.values(allPlayers).filter(p => {
         if (p.id == userId) return false;
         if (!p.garage?.length) return false;
@@ -353,12 +352,10 @@ function checkFarmCooldown() {
 }
 
 // ============ РЕФЕРАЛЬНАЯ СИСТЕМА ============
-// Проверяем, есть ли параметр start в URL (приглашение)
 const urlParams = new URLSearchParams(window.location.search);
 const refId = urlParams.get('start');
 
 if (refId && refId != userId) {
-    // Этот игрок пришёл по чьей-то ссылке
     if (!player.ref_by) {
         player.ref_by = refId;
     }
@@ -373,8 +370,8 @@ async function processReferral() {
         if (!inviter.friends.includes(userId)) {
             inviter.friends.push(userId);
             inviter.ref_count = (inviter.ref_count || 0) + 1;
-            inviter.balance += 100; // Бонус за приглашение
-            player.balance += 50;   // Бонус новому игроку
+            inviter.balance += 100;
+            player.balance += 50;
             await saveAllData();
         }
     }

@@ -59,34 +59,69 @@ var player = {
 
 var allPlayers = {};
 
-// ============ JSONBIN API ============
+// ============ ЗАГРУЗКА И СОХРАНЕНИЕ ============
 function loadAllData(callback) {
+    // Шаг 1: Загружаем локально
+    var saved = localStorage.getItem('player_' + userId);
+    if (saved) {
+        try {
+            var parsed = JSON.parse(saved);
+            player.balance = parsed.balance || 500;
+            player.garage = parsed.garage || [];
+            player.friends = parsed.friends || [];
+            player.ref_count = parsed.ref_count || 0;
+            player.last_farm = parsed.last_farm || 0;
+        } catch(e) {}
+    }
+    
+    // Шаг 2: Пробуем облако
     fetch(BIN_URL + '/latest', {
         headers: { 'X-Master-Key': MASTER_KEY }
     })
-    .then(function(res) { return res.json(); })
+    .then(function(res) {
+        if (!res.ok) throw new Error('Ошибка');
+        return res.json();
+    })
     .then(function(data) {
         allPlayers = data.record || {};
+        // Обновляем данные игрока из облака
         if (allPlayers[userId]) {
             player = allPlayers[userId];
             player.id = userId;
             player.name = player.name || userName;
             player.friends = player.friends || [];
             player.garage = player.garage || [];
-            if (!player.garage.length) addStarterCar();
-        } else {
-            addStarterCar();
         }
-        if (callback) callback();
+        finishInit(callback);
     })
     .catch(function() {
-        addStarterCar();
-        if (callback) callback();
+        // Облако недоступно — используем локальные данные
+        finishInit(callback);
     });
 }
 
-function saveAllData() {
+function finishInit(callback) {
+    if (!player.garage || player.garage.length === 0) {
+        player.garage = [{
+            uniqueId: 'car_' + Date.now() + '_' + userId,
+            templateId: 1,
+            level: 1,
+            ownerHistory: [userId],
+            buyPrice: 50,
+            timesResold: 0
+        }];
+    }
     allPlayers[userId] = player;
+    saveLocal();
+    if (callback) callback();
+}
+
+function saveLocal() {
+    localStorage.setItem('player_' + userId, JSON.stringify(player));
+    allPlayers[userId] = player;
+}
+
+function saveCloud() {
     fetch(BIN_URL, {
         method: 'PUT',
         headers: {
@@ -94,22 +129,9 @@ function saveAllData() {
             'X-Master-Key': MASTER_KEY
         },
         body: JSON.stringify(allPlayers)
-    }).catch(function(e) {
-        console.log('Ошибка сохранения:', e);
+    }).catch(function() {
+        // Ничего страшного, сохранили локально
     });
-}
-
-function addStarterCar() {
-    player.garage = [{
-        uniqueId: 'car_' + Date.now() + '_' + userId,
-        templateId: 1,
-        level: 1,
-        ownerHistory: [userId],
-        buyPrice: 50,
-        timesResold: 0
-    }];
-    allPlayers[userId] = player;
-    saveAllData();
 }
 
 // ============ ЭКРАНЫ ============
@@ -145,7 +167,7 @@ function showFarm() { hideAll(); $('farm-screen').classList.remove('hidden'); up
 function hideFarm() { $('farm-screen').classList.add('hidden'); }
 
 function inviteToChat() {
-    tg.openTelegramLink('https://t.me/+ТВОЯ_ССЫЛКА_НА_ЧАТ');
+    tg.openTelegramLink('https://t.me/+ТВОЯ_ССЫЛКА');
 }
 
 // ============ ОТРИСОВКА ============
@@ -282,7 +304,8 @@ function buyCar(sellerId, carIndex, price) {
     car.buyPrice = price;
     car.level++;
     player.garage.push(car);
-    saveAllData();
+    saveLocal();
+    saveCloud();
     updateUI();
     renderPlayerGarage(sellerId);
     tg.showAlert('Куплено!');
@@ -296,7 +319,8 @@ function upgradeCar(index) {
     player.balance -= cost;
     car.level++;
     car.buyPrice = Math.floor(car.buyPrice * 1.1);
-    saveAllData();
+    saveLocal();
+    saveCloud();
     updateUI();
     renderGarage();
     tg.showAlert('Тюнинг! Ур.' + car.level);
@@ -315,7 +339,8 @@ function doFarm() {
     }
     player.balance += income;
     player.last_farm = now;
-    saveAllData();
+    saveLocal();
+    saveCloud();
     updateUI();
     updateFarmButton();
     if ($('farm-result')) $('farm-result').textContent = '+' + income + ' 💰';

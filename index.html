@@ -1,86 +1,16 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Перекупы</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест</title>
 </head>
-<body>
-    <div id="app">
-        <div id="main-screen">
-            <!-- Шапка -->
-            <div class="header">
-                <div class="game-title">🔑 ПЕРЕКУПЫ</div>
-                <div class="league-badge" id="league-badge">🔰 Новичок</div>
-                <div class="balance-block">💰 <span id="balance">0</span> монет</div>
-            </div>
-
-            <!-- Главное меню -->
-            <div class="menu-buttons">
-                <button onclick="showGarage()">🚗 Мой Гараж</button>
-                <button onclick="showMarket()">📈 Авторынок</button>
-                <button onclick="showFarm()">⚡ Фарм</button>
-                <button onclick="showInvite()">👥 Пригласить</button>
-                <button onclick="showFriends()">👫 Друзья</button>
-                <button onclick="showRating()">🏆 Рейтинг</button>
-            </div>
-
-            <!-- Мой гараж -->
-            <div id="garage-screen" class="screen hidden">
-                <h3>🚗 Мой Гараж</h3>
-                <div id="garage-cars"></div>
-                <button onclick="hideGarage()">◀️ Назад</button>
-            </div>
-
-            <!-- Авторынок (игроки той же лиги) -->
-            <div id="market-screen" class="screen hidden">
-                <h3>📈 Авторынок</h3>
-                <p style="color:#aaa;font-size:13px;text-align:center;">Игроки твоей лиги</p>
-                <div id="market-list"></div>
-                <button onclick="hideMarket()">◀️ Назад</button>
-            </div>
-
-            <!-- Гараж другого игрока -->
-            <div id="player-garage-screen" class="screen hidden">
-                <h3 id="player-garage-title">Гараж игрока</h3>
-                <div id="player-garage-cars"></div>
-                <button onclick="hidePlayerGarage()">◀️ Назад</button>
-            </div>
-
-            <!-- Приглашения -->
-            <div id="invite-screen" class="screen hidden">
-                <h3>👥 Пригласи барыгу</h3>
-                <p>Твоя реферальная ссылка:</p>
-                <code id="ref-link"></code>
-                <p>Друзей приглашено: <span id="ref-count">0</span></p>
-                <button onclick="hideInvite()">◀️ Назад</button>
-            </div>
-
-            <!-- Друзья -->
-            <div id="friends-screen" class="screen hidden">
-                <h3>👫 Твои друзья</h3>
-                <div id="friends-list"></div>
-                <button onclick="hideFriends()">◀️ Назад</button>
-            </div>
-
-            <!-- Рейтинг -->
-            <div id="rating-screen" class="screen hidden">
-                <h3>🏆 Рейтинг перекупов</h3>
-                <div id="rating-list"></div>
-                <button onclick="hideRating()">◀️ Назад</button>
-            </div>
-
-            <!-- Фарм -->
-            <div id="farm-screen" class="screen hidden">
-                <h3>⚡ Крути движки!</h3>
-                <div id="farm-result"></div>
-                <button id="farm-button" onclick="doFarm()">⚡ Газануть!</button>
-                <button onclick="hideFarm()">◀️ Назад</button>
-            </div>
-        </div>
-    </div>
-    <script src="app.js"></script>
+<body style="background:#0a0a14; color:#fff; text-align:center; padding:50px; font-family:sans-serif;">
+    <h1>ТЕСТ</h1>
+    <p>Если ты это видишь — Netlify работает</p>
+    <p id="test">Загрузка...</p>
+    <button onclick="document.getElementById('test').textContent = 'Кнопка работает!'" style="padding:20px; font-size:20px; background:#e94560; color:#fff; border:none; border-radius:10px;">
+        НАЖМИ МЕНЯ
+    </button>
 </body>
 </html>

@@ -1,8 +1,7 @@
-// Токен теперь в config.js
-var GITHUB_TOKEN = '{{env.GITHUB_TOKEN}}';
-var GITHUB_USER = 'ТВОЙ_ЛОГИН_GITHUB';
-var GITHUB_REPO = 'perekup-game';
-var DATA_FILE = 'data.json';
+// ============ ВСТАВЬ СВОИ ДАННЫЕ ↓ ============
+var BIN_ID = '6a005098adc21f119a7be48c';
+var MASTER_KEY = '$2a$10$dtNfbApmiayE.YLsXsVpG.gAaPUEWPJu1ZhGPVizLklxuYC9BccdG';
+var BIN_URL = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
 
 // ============ TELEGRAM ============
 var tg = window.Telegram.WebApp;
@@ -60,33 +59,27 @@ var player = {
 
 var allPlayers = {};
 
-// ============ GITHUB API ============
-var API_URL = 'https://api.github.com/repos/' + GITHUB_USER + '/' + GITHUB_REPO + '/contents/' + DATA_FILE;
-
+// ============ JSONBIN API ============
 function loadAllData(callback) {
-    fetch(API_URL, {
-        headers: { 'Authorization': 'token ' + GITHUB_TOKEN }
+    fetch(BIN_URL + '/latest', {
+        headers: { 'X-Master-Key': MASTER_KEY }
     })
     .then(function(res) { return res.json(); })
     .then(function(data) {
-        var content = atob(data.content);
-        allPlayers = JSON.parse(content) || {};
+        allPlayers = data.record || {};
         if (allPlayers[userId]) {
             player = allPlayers[userId];
             player.id = userId;
             player.name = player.name || userName;
             player.friends = player.friends || [];
             player.garage = player.garage || [];
-            if (!player.garage || player.garage.length === 0) {
-                addStarterCar();
-            }
+            if (!player.garage.length) addStarterCar();
         } else {
             addStarterCar();
         }
         if (callback) callback();
     })
-    .catch(function(e) {
-        console.log('Ошибка загрузки:', e);
+    .catch(function() {
         addStarterCar();
         if (callback) callback();
     });
@@ -94,45 +87,32 @@ function loadAllData(callback) {
 
 function saveAllData() {
     allPlayers[userId] = player;
-    fetch(API_URL, {
-        headers: { 'Authorization': 'token ' + GITHUB_TOKEN }
-    })
-    .then(function(res) { return res.json(); })
-    .then(function(data) {
-        var body = {
-            message: 'update game data',
-            content: btoa(unescape(encodeURIComponent(JSON.stringify(allPlayers))))
-        };
-        if (data.sha) body.sha = data.sha;
-        return fetch(API_URL, {
-            method: 'PUT',
-            headers: {
-                'Authorization': 'token ' + GITHUB_TOKEN,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-        });
-    })
-    .catch(function(e) {
+    fetch(BIN_URL, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': MASTER_KEY
+        },
+        body: JSON.stringify(allPlayers)
+    }).catch(function(e) {
         console.log('Ошибка сохранения:', e);
     });
 }
 
 function addStarterCar() {
-    if (!player.garage) player.garage = [];
-    player.garage.push({
+    player.garage = [{
         uniqueId: 'car_' + Date.now() + '_' + userId,
         templateId: 1,
         level: 1,
         ownerHistory: [userId],
         buyPrice: 50,
         timesResold: 0
-    });
+    }];
     allPlayers[userId] = player;
     saveAllData();
 }
 
-// ============ ФУНКЦИИ ОТОБРАЖЕНИЯ ============
+// ============ ЭКРАНЫ ============
 function $(id) { return document.getElementById(id); }
 
 function hideAll() {
@@ -145,10 +125,8 @@ function hideAll() {
 
 function showGarage() { hideAll(); $('garage-screen').classList.remove('hidden'); renderGarage(); }
 function hideGarage() { $('garage-screen').classList.add('hidden'); }
-
 function showMarket() { hideAll(); $('market-screen').classList.remove('hidden'); renderMarket(); }
 function hideMarket() { $('market-screen').classList.add('hidden'); }
-
 function showPlayerGarage(pid) { hideAll(); $('player-garage-screen').classList.remove('hidden'); renderPlayerGarage(pid); }
 function hidePlayerGarage() { $('player-garage-screen').classList.add('hidden'); }
 
@@ -159,18 +137,15 @@ function showInvite() {
     $('ref-count').textContent = player.ref_count;
 }
 function hideInvite() { $('invite-screen').classList.add('hidden'); }
-
 function showFriends() { hideAll(); $('friends-screen').classList.remove('hidden'); renderFriends(); }
 function hideFriends() { $('friends-screen').classList.add('hidden'); }
-
 function showRating() { hideAll(); $('rating-screen').classList.remove('hidden'); renderRating(); }
 function hideRating() { $('rating-screen').classList.add('hidden'); }
-
 function showFarm() { hideAll(); $('farm-screen').classList.remove('hidden'); updateFarmButton(); }
 function hideFarm() { $('farm-screen').classList.add('hidden'); }
 
 function inviteToChat() {
-    tg.openTelegramLink('https://t.me/+ВАША_ССЫЛКА_НА_ЧАТ');
+    tg.openTelegramLink('https://t.me/+ТВОЯ_ССЫЛКА_НА_ЧАТ');
 }
 
 // ============ ОТРИСОВКА ============
@@ -193,7 +168,7 @@ function findTemplate(id) {
 
 function renderGarage() {
     var c = $('garage-cars');
-    if (!player.garage || player.garage.length === 0) {
+    if (!player.garage.length) {
         c.innerHTML = '<p style="text-align:center;color:#aaa;">Гараж пуст.</p>';
         return;
     }
@@ -214,10 +189,10 @@ function renderMarket() {
     for (var id in allPlayers) {
         var p = allPlayers[id];
         if (p.id == player.id) continue;
-        if (!p.garage || p.garage.length === 0) continue;
+        if (!p.garage || !p.garage.length) continue;
         if (getLeague(p.balance).name === myLeague.name) sameLeague.push(p);
     }
-    if (sameLeague.length === 0) {
+    if (!sameLeague.length) {
         c.innerHTML = '<p style="text-align:center;color:#aaa;">В твоей лиге никого нет.</p>';
         return;
     }
@@ -226,7 +201,7 @@ function renderMarket() {
         var p = sameLeague[i];
         var val = 0;
         for (var j = 0; j < p.garage.length; j++) val += p.garage[j].buyPrice;
-        html += '<div class="player-card" onclick="showPlayerGarage(\'' + p.id + '\')"><div class="player-card-info"><h4>👤 ' + (p.name || 'Игрок') + '</h4><p>Машин: ' + p.garage.length + ' | ' + val + ' 💰</p><span class="league-tag ' + getLeague(p.balance).cssClass + '">' + getLeague(p.balance).name + '</span></div><div class="player-card-arrow">➡️</div></div>';
+        html += '<div class="player-card" onclick="showPlayerGarage(\'' + p.id + '\')"><div class="player-card-info"><h4>👤 ' + (p.name || 'Игрок') + '</h4><p>Машин: ' + p.garage.length + ' | ' + val + ' 💰</p></div><div class="player-card-arrow">➡️</div></div>';
     }
     c.innerHTML = html;
 }
@@ -236,7 +211,7 @@ function renderPlayerGarage(pid) {
     if (!other) { hidePlayerGarage(); return; }
     $('player-garage-title').textContent = 'Гараж: ' + (other.name || 'Игрок');
     var c = $('player-garage-cars');
-    if (!other.garage || other.garage.length === 0) {
+    if (!other.garage || !other.garage.length) {
         c.innerHTML = '<p style="text-align:center;color:#aaa;">Пусто.</p>';
         return;
     }
@@ -246,14 +221,14 @@ function renderPlayerGarage(pid) {
         var t = findTemplate(car.templateId);
         if (!t) continue;
         var price = Math.floor(car.buyPrice * 1.2);
-        html += '<div class="car-card"><div class="car-info"><h4>' + t.emoji + ' ' + t.name + '</h4><p>Ур.' + car.level + ' | Доход: +' + (t.income * car.level) + '</p><p>Перепродаж: ' + car.timesResold + '</p></div><div class="car-actions"><span class="car-price">' + price + ' 💰</span><button onclick="buyCar(\'' + pid + '\', ' + i + ', ' + price + ')">Купить</button></div></div>';
+        html += '<div class="car-card"><div class="car-info"><h4>' + t.emoji + ' ' + t.name + '</h4><p>Ур.' + car.level + ' | Доход: +' + (t.income * car.level) + '</p></div><div class="car-actions"><span class="car-price">' + price + ' 💰</span><button onclick="buyCar(\'' + pid + '\', ' + i + ', ' + price + ')">Купить</button></div></div>';
     }
     c.innerHTML = html;
 }
 
 function renderFriends() {
     var c = $('friends-list');
-    if (!player.friends || player.friends.length === 0) {
+    if (!player.friends || !player.friends.length) {
         c.innerHTML = '<p style="text-align:center;color:#aaa;">Нет друзей.</p>';
         return;
     }
@@ -261,7 +236,7 @@ function renderFriends() {
     for (var i = 0; i < player.friends.length; i++) {
         var f = allPlayers[player.friends[i]];
         if (!f) continue;
-        html += '<div class="friend-card" onclick="showPlayerGarage(\'' + f.id + '\')"><div class="friend-card-info"><h4>👤 ' + (f.name || 'Игрок') + '</h4><p>Баланс: ' + f.balance + ' 💰 | Машин: ' + (f.garage ? f.garage.length : 0) + '</p></div><div class="player-card-arrow">➡️</div></div>';
+        html += '<div class="friend-card"><h4>👤 ' + (f.name || 'Игрок') + '</h4><p>' + f.balance + ' 💰</p></div>';
     }
     c.innerHTML = html;
 }
@@ -274,11 +249,7 @@ function renderRating() {
     var html = '';
     for (var i = 0; i < all.length; i++) {
         var p = all[i];
-        var medal = '';
-        if (i === 0) medal = '🥇';
-        else if (i === 1) medal = '🥈';
-        else if (i === 2) medal = '🥉';
-        html += '<div class="rating-card"><div class="rating-pos">' + (medal || (i + 1)) + '</div><div class="rating-card-info"><h4>' + (p.name || 'Игрок') + '</h4><p>' + p.balance + ' 💰 | Машин: ' + (p.garage ? p.garage.length : 0) + '</p></div></div>';
+        html += '<div class="rating-card"><div class="rating-pos">' + (i + 1) + '</div><div class="rating-card-info"><h4>' + (p.name || 'Игрок') + '</h4><p>' + p.balance + ' 💰</p></div></div>';
     }
     c.innerHTML = html || '<p style="text-align:center;color:#aaa;">Пусто.</p>';
 }
@@ -299,16 +270,14 @@ function updateFarmButton() {
     }
 }
 
-// ============ ИГРОВЫЕ ДЕЙСТВИЯ ============
+// ============ ДЕЙСТВИЯ ============
 function buyCar(sellerId, carIndex, price) {
     if (player.balance < price) return tg.showAlert('Мало монет!');
     var seller = allPlayers[sellerId];
     if (!seller || !seller.garage || !seller.garage[carIndex]) return tg.showAlert('Продано!');
     var car = seller.garage.splice(carIndex, 1)[0];
-    var commission = Math.floor(price * 0.1);
     player.balance -= price;
-    seller.balance += price - commission;
-    car.ownerHistory.push(sellerId);
+    seller.balance += Math.floor(price * 0.9);
     car.timesResold++;
     car.buyPrice = price;
     car.level++;
@@ -316,7 +285,7 @@ function buyCar(sellerId, carIndex, price) {
     saveAllData();
     updateUI();
     renderPlayerGarage(sellerId);
-    tg.showAlert('Куплено! Комиссия: ' + commission + ' 💰');
+    tg.showAlert('Куплено!');
 }
 
 function upgradeCar(index) {
@@ -353,31 +322,8 @@ function doFarm() {
     tg.showAlert('+' + income + ' 💰');
 }
 
-// ============ РЕФЕРАЛЫ ============
-var urlParams = new URLSearchParams(window.location.search);
-var refId = urlParams.get('start');
-
-function processReferral() {
-    if (!refId || refId == userId) return;
-    var inviter = allPlayers[refId];
-    if (!inviter) return;
-    inviter.friends = inviter.friends || [];
-    var found = false;
-    for (var i = 0; i < inviter.friends.length; i++) {
-        if (inviter.friends[i] === userId) { found = true; break; }
-    }
-    if (!found) {
-        inviter.friends.push(userId);
-        inviter.ref_count = (inviter.ref_count || 0) + 1;
-        inviter.balance += 100;
-        player.balance += 50;
-        saveAllData();
-    }
-}
-
 // ============ СТАРТ ============
 loadAllData(function() {
-    processReferral();
     updateUI();
     updateFarmButton();
     setInterval(updateFarmButton, 1000);

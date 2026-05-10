@@ -1,7 +1,5 @@
-// ============ ВСТАВЬ СВОИ ДАННЫЕ ↓ ============
-var BIN_ID = '6a005098adc21f119a7be48c';
-var MASTER_KEY = '$2a$10$xOoMsPQrjZJ209Tuf1e9D.7pLaRgSt/pJRlyNrAIhVZux2ids7xsa';
-var BIN_URL = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
+// ============ ВСТАВЬ СВОЮ ССЫЛКУ ↓ ============
+var FIREBASE_URL = 'https://perekup-game-default-rtdb.firebaseio.com/';
 
 // ============ TELEGRAM ============
 var tg = window.Telegram.WebApp;
@@ -59,9 +57,9 @@ var player = {
 
 var allPlayers = {};
 
-// ============ ЗАГРУЗКА И СОХРАНЕНИЕ ============
+// ============ FIREBASE ============
 function loadAllData(callback) {
-    // Шаг 1: Загружаем локально
+    // Загружаем локально
     var saved = localStorage.getItem('player_' + userId);
     if (saved) {
         try {
@@ -69,33 +67,28 @@ function loadAllData(callback) {
             player.balance = parsed.balance || 500;
             player.garage = parsed.garage || [];
             player.friends = parsed.friends || [];
-            player.ref_count = parsed.ref_count || 0;
             player.last_farm = parsed.last_farm || 0;
         } catch(e) {}
     }
-    
-    // Шаг 2: Пробуем облако
-    fetch(BIN_URL + '/latest', {
-        headers: { 'X-Master-Key': MASTER_KEY }
-    })
-    .then(function(res) {
-        if (!res.ok) throw new Error('Ошибка');
-        return res.json();
-    })
+
+    // Загружаем из Firebase
+    fetch(FIREBASE_URL + 'players.json')
+    .then(function(res) { return res.json(); })
     .then(function(data) {
-        allPlayers = data.record || {};
-        // Обновляем данные игрока из облака
-        if (allPlayers[userId]) {
-            player = allPlayers[userId];
-            player.id = userId;
-            player.name = player.name || userName;
-            player.friends = player.friends || [];
-            player.garage = player.garage || [];
+        if (data) {
+            allPlayers = data;
+            if (allPlayers[userId]) {
+                player = allPlayers[userId];
+                player.id = userId;
+                player.name = player.name || userName;
+                player.friends = player.friends || [];
+                player.garage = player.garage || [];
+                localStorage.setItem('player_' + userId, JSON.stringify(player));
+            }
         }
         finishInit(callback);
     })
     .catch(function() {
-        // Облако недоступно — используем локальные данные
         finishInit(callback);
     });
 }
@@ -113,6 +106,7 @@ function finishInit(callback) {
     }
     allPlayers[userId] = player;
     saveLocal();
+    saveCloud();
     if (callback) callback();
 }
 
@@ -122,15 +116,11 @@ function saveLocal() {
 }
 
 function saveCloud() {
-    fetch(BIN_URL, {
+    fetch(FIREBASE_URL + 'players/' + userId + '.json', {
         method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': MASTER_KEY
-        },
-        body: JSON.stringify(allPlayers)
+        body: JSON.stringify(player)
     }).catch(function() {
-        // Ничего страшного, сохранили локально
+        // Ничего, локально сохранено
     });
 }
 

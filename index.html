@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Перекупы</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -12,43 +12,55 @@
         <!-- Главный экран -->
         <div id="main-screen">
             <div class="header">
+                <div class="game-title">🔑 ПЕРЕКУПЫ</div>
                 <div class="balance-block">
-                    💰 Баланс: <span id="balance">0</span> монет
+                    💰 <span id="balance">0</span> монет
                 </div>
             </div>
 
             <div class="menu-buttons">
                 <button onclick="showGarage()">🚗 Мой Гараж</button>
                 <button onclick="showMarket()">📈 Авторынок</button>
-                <button onclick="showInvite()">👥 Пригласить барыгу</button>
-                <button onclick="showFarm()">🔧 Фарм (Крутить движки)</button>
+                <button onclick="showFarm()">⚡ Фарм</button>
+                <button onclick="showInvite()">👥 Пригласить</button>
             </div>
 
+            <!-- Мой гараж -->
             <div id="garage-screen" class="screen hidden">
-                <h3>Твой гараж</h3>
+                <h3>🚗 Мой Гараж</h3>
                 <div id="garage-cars"></div>
-                <button onclick="hideGarage()">Назад</button>
+                <button onclick="hideGarage()">◀️ Назад</button>
             </div>
 
+            <!-- Авторынок (список игроков) -->
             <div id="market-screen" class="screen hidden">
-                <h3>Авторынок</h3>
+                <h3>📈 Авторынок</h3>
                 <div id="market-list"></div>
-                <button onclick="hideMarket()">Назад</button>
+                <button onclick="hideMarket()">◀️ Назад</button>
             </div>
 
+            <!-- Гараж другого игрока -->
+            <div id="player-garage-screen" class="screen hidden">
+                <h3 id="player-garage-title">Гараж игрока</h3>
+                <div id="player-garage-cars"></div>
+                <button onclick="hidePlayerGarage()">◀️ Назад</button>
+            </div>
+
+            <!-- Приглашения -->
             <div id="invite-screen" class="screen hidden">
-                <h3>Приглашение</h3>
-                <p>Твоя ссылка:</p>
+                <h3>👥 Пригласи барыгу</h3>
+                <p>Твоя реферальная ссылка:</p>
                 <code id="ref-link"></code>
-                <p>Приглашено: <span id="ref-count">0</span></p>
-                <button onclick="hideInvite()">Назад</button>
+                <p>Приглашено игроков: <span id="ref-count">0</span></p>
+                <button onclick="hideInvite()">◀️ Назад</button>
             </div>
 
+            <!-- Фарм -->
             <div id="farm-screen" class="screen hidden">
-                <h3>Крути движки!</h3>
+                <h3>⚡ Крути движки!</h3>
                 <div id="farm-result"></div>
                 <button id="farm-button" onclick="doFarm()">⚡ Газануть!</button>
-                <button onclick="hideFarm()">Назад</button>
+                <button onclick="hideFarm()">◀️ Назад</button>
             </div>
         </div>
     </div>

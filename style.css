@@ -1,118 +1,211 @@
 /* Общие стили */
+* {
+    box-sizing: border-box;
+}
+
 body {
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #1a1a2e;
-    color: #eee;
+    background: #0a0a14;
+    color: #fff;
     min-height: 100vh;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 #app {
-    max-width: 400px;
+    max-width: 420px;
     margin: 0 auto;
-    padding: 15px;
+    padding: 10px;
 }
 
-/* Заголовок и баланс */
+/* Заголовок */
 .header {
-    background: linear-gradient(135deg, #16213e, #0f3460);
+    background: linear-gradient(145deg, #1a1a35, #12122a);
     padding: 20px;
-    border-radius: 16px;
+    border-radius: 20px;
     text-align: center;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    margin-bottom: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+    border: 1px solid rgba(233,69,96,0.3);
+}
+
+.game-title {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #e94560;
+    margin-bottom: 10px;
+    text-shadow: 0 0 20px rgba(233,69,96,0.5);
 }
 
 .balance-block {
-    font-size: 26px;
-    font-weight: bold;
-    color: #e94560;
-    text-shadow: 0 0 10px rgba(233,69,96,0.5);
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #e94560, #ff6b6b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: pulse 2s infinite;
 }
 
-/* Кнопки меню */
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* Кнопки главного меню */
+.menu-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
 .menu-buttons button {
-    display: block;
-    width: 100%;
-    padding: 16px;
-    margin-bottom: 12px;
-    background: #16213e;
-    border: 2px solid #0f3460;
-    border-radius: 14px;
+    padding: 18px 10px;
+    background: linear-gradient(145deg, #1e1e3a, #161630);
+    border: 1px solid rgba(233,69,96,0.2);
+    border-radius: 18px;
     color: white;
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 
 .menu-buttons button:active {
+    transform: scale(0.94);
     background: #e94560;
     border-color: #e94560;
-    transform: scale(0.97);
+    box-shadow: 0 0 25px rgba(233,69,96,0.5);
 }
 
 /* Экраны */
 .screen {
-    background: #16213e;
-    border-radius: 16px;
+    background: linear-gradient(145deg, #1a1a35, #12122a);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 20px;
     padding: 20px;
     margin-top: 15px;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .screen h3 {
-    margin-top: 0;
+    margin: 0 0 15px 0;
     color: #e94560;
     font-size: 22px;
     text-align: center;
+    font-weight: 700;
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 /* Карточки машин */
 .car-card {
-    background: #0f3460;
-    border-radius: 12px;
-    padding: 15px;
-    margin-bottom: 12px;
+    background: rgba(15,52,96,0.5);
+    border: 1px solid rgba(233,69,96,0.15);
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: all 0.2s ease;
+}
+
+.car-card:last-child {
+    margin-bottom: 0;
 }
 
 .car-info h4 {
-    margin: 0 0 5px 0;
-    font-size: 18px;
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    font-weight: 700;
 }
 
 .car-info p {
-    margin: 0;
-    color: #aaa;
-    font-size: 14px;
+    margin: 2px 0;
+    color: #8a8aaa;
+    font-size: 12px;
 }
 
 .car-price {
     color: #4ecca3;
     font-weight: bold;
-    font-size: 18px;
+    font-size: 16px;
+    text-shadow: 0 0 8px rgba(78,204,163,0.4);
+    display: block;
+    margin-bottom: 8px;
 }
 
 .car-actions button {
-    background: #e94560;
+    background: linear-gradient(135deg, #e94560, #c23152);
     border: none;
-    padding: 10px 18px;
-    border-radius: 8px;
+    padding: 10px 16px;
+    border-radius: 10px;
     color: white;
-    font-weight: bold;
-    font-size: 15px;
+    font-weight: 700;
+    font-size: 14px;
     cursor: pointer;
+    transition: all 0.2s;
 }
 
 .car-actions button:active {
-    background: #c23152;
+    transform: scale(0.9);
+    box-shadow: 0 0 20px rgba(233,69,96,0.6);
+}
+
+/* Карточка игрока на рынке */
+.player-card {
+    background: rgba(15,52,96,0.4);
+    border: 1px solid rgba(78,204,163,0.2);
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.player-card:active {
+    background: rgba(78,204,163,0.1);
+    border-color: rgba(78,204,163,0.5);
+}
+
+.player-card-info h4 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.player-card-info p {
+    margin: 2px 0;
+    color: #8a8aaa;
+    font-size: 12px;
+}
+
+.player-card-arrow {
+    font-size: 24px;
+    color: #4ecca3;
 }
 
 /* Кнопка фарма */
@@ -122,38 +215,70 @@ body {
     padding: 20px;
     background: linear-gradient(135deg, #e94560, #c23152);
     border: none;
-    border-radius: 50px;
+    border-radius: 25px;
     color: white;
-    font-size: 22px;
-    font-weight: bold;
+    font-size: 20px;
+    font-weight: 800;
     cursor: pointer;
-    margin: 20px 0;
-    box-shadow: 0 6px 20px rgba(233,69,96,0.4);
+    margin: 15px 0;
+    box-shadow: 0 6px 25px rgba(233,69,96,0.5);
+    transition: all 0.3s;
 }
 
 #farm-button:active {
-    transform: scale(0.95);
+    transform: scale(0.93);
+}
+
+#farm-result {
+    text-align: center;
+    font-size: 18px;
+    color: #4ecca3;
+    min-height: 30px;
+    font-weight: 700;
 }
 
 /* Ссылка приглашения */
 #ref-link {
-    background: #0f3460;
-    padding: 10px;
-    border-radius: 8px;
+    background: #0d0d1a;
+    padding: 12px;
+    border-radius: 10px;
     word-break: break-all;
     display: block;
     margin: 10px 0;
-    font-size: 14px;
+    font-size: 13px;
     color: #4ecca3;
+    border: 1px solid rgba(78,204,163,0.3);
 }
 
-/* Кнопка назад */
+#ref-count {
+    font-weight: 700;
+    color: #e94560;
+}
+
+/* Кнопки назад */
 .screen > button:last-child {
     margin-top: 15px;
     background: transparent;
-    border: 1px solid #aaa;
+    border: 1px solid #555;
     color: #aaa;
     padding: 10px 20px;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    width: 100%;
+    font-size: 15px;
+}
+
+.screen > button:last-child:active {
+    background: rgba(255,255,255,0.08);
+}
+
+/* Скролл внутри экранов */
+#garage-cars,
+#market-list,
+#player-garage-cars {
+    max-height: 55vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }

@@ -1,6 +1,6 @@
 // ============ ВСТАВЬ СВОИ ДАННЫЕ ↓ ============
 var BIN_ID = '6a005098adc21f119a7be48c';
-var MASTER_KEY = '$2a$10$dtNfbApmiayE.YLsXsVpG.gAaPUEWPJu1ZhGPVizLklxuYC9BccdG';
+var MASTER_KEY = '$2a$10$xOoMsPQrjZJ209Tuf1e9D.7pLaRgSt/pJRlyNrAIhVZux2ids7xsa';
 var BIN_URL = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
 
 // ============ TELEGRAM ============

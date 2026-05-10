@@ -51,53 +51,28 @@ let player = {
 
 let allPlayers = {};
 
-// ============ JSONBIN ============
-async function loadAllData() {
-    try {
-        const res = await fetch(BIN_URL + '/latest', {
-            headers: { 'X-Master-Key': MASTER_KEY }
-        });
-        const data = await res.json();
-        allPlayers = data.record || {};
-        
-        if (allPlayers[userId]) {
-            player = allPlayers[userId];
-            player.id = userId;
-            player.name = player.name || userName;
-            player.friends = player.friends || [];
-            player.garage = player.garage || [];
-        } else {
-            initPlayer();
-        }
-    } catch (e) {
-        console.error('Ошибка загрузки:', e);
-        loadFromLocal();
-    }
-    updateUI();
-}
-
+// ============ JSONBIN (пока отключён) ============
 function loadFromLocal() {
     const saved = localStorage.getItem(`player_${userId}`);
     if (saved) {
         player = JSON.parse(saved);
+        player.id = userId;
+        player.name = player.name || userName;
+        player.friends = player.friends || [];
+        player.garage = player.garage || [];
+        if (!player.garage.length) {
+            initPlayer();
+        }
     } else {
         initPlayer();
     }
     allPlayers[userId] = player;
+    updateUI();
 }
 
-async function saveAllData() {
+function saveToLocal() {
     allPlayers[userId] = player;
     localStorage.setItem(`player_${userId}`, JSON.stringify(player));
-    try {
-        await fetch(BIN_URL, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'X-Master-Key': MASTER_KEY },
-            body: JSON.stringify(allPlayers)
-        });
-    } catch (e) {
-        console.error('Ошибка сохранения:', e);
-    }
 }
 
 // ============ ЭКРАНЫ ============
@@ -303,7 +278,7 @@ async function buyCar(sellerId, carIndex, price) {
     
     player.garage.push(car);
     
-    await saveAllData();
+    saveToLocal();
     updateUI();
     renderPlayerGarage(sellerId);
     tg.showAlert(`Куплено! Комиссия: ${commission} 💰`);
@@ -319,7 +294,7 @@ async function upgradeCar(index) {
     car.level++;
     car.buyPrice = Math.floor(car.buyPrice * 1.1);
     
-    await saveAllData();
+    saveToLocal();
     updateUI();
     renderMyGarage();
     tg.showAlert(`Тюнинг! Ур.${car.level}`);
@@ -340,7 +315,7 @@ async function doFarm() {
     player.balance += income;
     player.last_farm = now;
     
-    await saveAllData();
+    saveToLocal();
     $('#farm-result').textContent = `+${income} 💰`;
     updateUI();
     checkFarmCooldown();
@@ -349,32 +324,6 @@ async function doFarm() {
 function checkFarmCooldown() {
     const btn = $('#farm-button');
     if (btn) btn.style.opacity = (Date.now() - player.last_farm < 60000) ? '0.5' : '1';
-}
-
-// ============ РЕФЕРАЛЬНАЯ СИСТЕМА ============
-const urlParams = new URLSearchParams(window.location.search);
-const refId = urlParams.get('start');
-
-if (refId && refId != userId) {
-    if (!player.ref_by) {
-        player.ref_by = refId;
-    }
-}
-
-async function processReferral() {
-    if (!player.ref_by || player.ref_by == userId) return;
-    
-    const inviter = allPlayers[player.ref_by];
-    if (inviter) {
-        inviter.friends = inviter.friends || [];
-        if (!inviter.friends.includes(userId)) {
-            inviter.friends.push(userId);
-            inviter.ref_count = (inviter.ref_count || 0) + 1;
-            inviter.balance += 100;
-            player.balance += 50;
-            await saveAllData();
-        }
-    }
 }
 
 // ============ ИНИЦИАЛИЗАЦИЯ ============
@@ -392,14 +341,16 @@ function initPlayer() {
         timesResold: 0
     }];
     allPlayers[userId] = player;
-    saveAllData();
+    saveToLocal();
     updateUI();
 }
 
-// ============ СТАРТ ============
-(async function start() {
-    if (!userId) return tg.showAlert('Запусти через Telegram!');
-    await loadAllData();
-    await processReferral();
+// ============ СТАРТ (ЛОКАЛЬНЫЙ РЕЖИМ) ============
+(function start() {
+    if (!userId) {
+        alert('Запусти через Telegram!');
+        return;
+    }
+    loadFromLocal();
     setInterval(checkFarmCooldown, 1000);
 })();
